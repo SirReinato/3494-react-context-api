@@ -1,58 +1,60 @@
-import { useContext } from "react";
+import { useContext} from "react";
 import { CarrinhoContext } from "../context/CarrinhoContext";
+import { ADD_PRODUTO, REMOVE_PRODUTO, UPDATE_QUANTIDADE } from '../reducers/carrinhoReduce'
+
+const addProdutoAction = (novoProduto) => ({
+  type: ADD_PRODUTO,
+  payload: novoProduto,
+
+});
+
+const removeProdutoAction = (produtoId) => ({
+  type: REMOVE_PRODUTO,
+  payload: produtoId,
+});
+
+const updateQuantidadeAction = (produtoId, quantidade) => ({
+  type: UPDATE_QUANTIDADE,
+  payload: { produtoId, quantidade },
+});
+
 
 export const useCarrinhoContext = () => {
-  const { carrinho, setCarrinho } = useContext(CarrinhoContext);
-
-//   Essa função tem o objetivo de mudar a quantidade de itens que foram add ou removidos do carrinho
-  function mudarQuantidade(id, quantidade) {
-    carrinho.map((itemDoCarrinho) =>{
-        if (itemDoCarrinho.id === id) {
-            itemDoCarrinho.quantidade += quantidade;
-            return itemDoCarrinho;
-        }
-    })
-  }
+  const {
+    carrinho,
+    dispatch,
+    quantidade,
+    valorTotal,
+  } = useContext(CarrinhoContext);
 
 
-//   Essa e a função responsável por add um produto ao carrinho
+  //   Essa e a função responsável por add um produto ao carrinho
   function addProduto(novoProduto) {
-    const jaTemOProduto = carrinho.some((itemDoCarrinho) => {
-      return itemDoCarrinho.id === novoProduto.id;
-    });
-
-    if (!jaTemOProduto) {
-      novoProduto.quantidade = 1;
-      return setCarrinho((carrinhoAnterior) => [
-        ...carrinhoAnterior,
-        novoProduto,
-      ]);
-    }
-
-    const carrinhoAtualizado = mudarQuantidade(novoProduto.id, 1)
-
-    setCarrinho( [...carrinhoAtualizado]);
+    dispatch(addProdutoAction(novoProduto))
   }
 
-//   Essa e a função responsável por add um produto ao carrinho
+  //   Essa e a função responsável por remover 1 item do carrinho
   function removerProduto(id) {
-    const produto = carrinho.find((itemDoCarrinho) => itemDoCarrinho.id === id);
-    const oUltimo = produto.quantidade === 1;
-    if (oUltimo) {
-      return setCarrinho((carrinhoAnterior) => {
-        carrinhoAnterior.filter((itemDoCarrinho) => itemDoCarrinho.id !== id);
-      });
+    const produto = carrinho.find((item) => item.id === id);
+
+    if (produto && produto.quantidade > 1) {
+        dispatch(updateQuantidadeAction(id, produto.quantidade - 1));
+    } else {
+        dispatch(removeProdutoAction(id));
     }
+  }
 
-    const carrinhoAtualizado = mudarQuantidade(id, -1)
-
-    setCarrinho([...carrinhoAtualizado]);
+  //   Essa e a função responsável por remover o item completo do carrinho
+  function paraAhLixeira(id) {
+    dispatch(removeProdutoAction(id))
   }
 
   return {
     carrinho,
-    setCarrinho,
     addProduto,
-    removerProduto
+    removerProduto,
+    paraAhLixeira,
+    quantidade,
+    valorTotal
   };
 };
